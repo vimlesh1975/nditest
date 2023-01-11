@@ -6,6 +6,37 @@ Imports NewTek
 Imports NewTek.NDI
 Public Class Form1
     Shared audioNumSamples As Integer() = {1602, 1601, 1602, 1601, 1602}
+
+
+    ' Note that I employ 'Using' statements to safely dispose of my IDisposable objects.
+    ' You can manually handle .Dispose() for longer lived objects or use any pattern you prefer.
+
+    ' this will show up as a source named "VB.Net Example" with all other settings at their defaults
+    Dim sendInstance As New Sender("VB.Net Example")
+
+    ' We are going to create a 1920x1080 16:9 frame at 29.97Hz, progressive (default).
+    Dim videoFrame As New VideoFrame(1920, 1080, (16.0F / 9.0F), 30000, 1001)
+
+    ' We are also going to create an audio frame with enough for 1700 samples for a bit of safety,
+    ' but 1602 should be enough using our settings as long as we don't overrun the buffer.
+    ' 48khz, stereo in the example.
+    Dim audioFrame As New AudioFrame(1700, 48000, 2)
+
+    ' get a compatible bitmap and graphics context
+    Dim bmp As New Bitmap(videoFrame.Width, videoFrame.Height, videoFrame.Stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.BufferPtr)
+
+    Dim graphics As Graphics = Graphics.FromImage(bmp)
+
+
+    ' We'll use these later inside the loop
+    Dim textFormat As New StringFormat()
+
+
+
+    Dim fontFamily As New FontFamily("Arial")
+    Dim outlinePen As New Pen(Color.Black, 2.0F)
+    Dim thinOutlinePen As New Pen(Color.Black, 1.0F)
+
     Private Shared Sub FillAudioBuffer(audioFrame As AudioFrame, doTone As Boolean)
         ' should never happen
         If audioFrame.AudioBuffer = IntPtr.Zero Then
@@ -47,111 +78,97 @@ Public Class Form1
         graphics.DrawPath(outline, path)
     End Sub
 
-    Friend Shared Sub Main()
+    Public Sub makeready()
+        textFormat.Alignment = StringAlignment.Near
+        textFormat.LineAlignment = StringAlignment.Near
+        graphics.SmoothingMode = SmoothingMode.AntiAlias
+    End Sub
+    Public Sub Main()
 
-        ' Note that I employ 'Using' statements to safely dispose of my IDisposable objects.
-        ' You can manually handle .Dispose() for longer lived objects or use any pattern you prefer.
+        makeready()
 
-        ' this will show up as a source named "VB.Net Example" with all other settings at their defaults
-        Using sendInstance As New Sender("VB.Net Example")
+        ' We will send 10000 frames of video.
+        'For frameNumber As Integer = 0 To 9999
+        ' are we connected to anyone?
+        If sendInstance.GetConnections(10000) < 1 Then
+                ' no point rendering
+                Console.WriteLine("No current connections, so no rendering needed.")
 
-            ' We are going to create a 1920x1080 16:9 frame at 29.97Hz, progressive (default).
-            Using videoFrame As New VideoFrame(1920, 1080, (16.0F / 9.0F), 30000, 1001)
+                ' Wait a bit, otherwise our limited example will end before you can connect to it
+                System.Threading.Thread.Sleep(50)
+            Else
+            ' Because we are clocking to the video it is better to always submit the audio
+            ' before, although there is very little in it. I'll leave it as an excercise for the
+            ' reader to work out why.
+            'audioFrame.NumSamples = audioNumSamples(frameNumber Mod 5)
+            'audioFrame.ChannelStride = audioFrame.NumSamples * 4
 
-                ' We are also going to create an audio frame with enough for 1700 samples for a bit of safety,
-                ' but 1602 should be enough using our settings as long as we don't overrun the buffer.
-                ' 48khz, stereo in the example.
-                Using audioFrame As New AudioFrame(1700, 48000, 2)
+            '' put tone in it every 30 frames
+            'Dim doTone As Boolean = frameNumber Mod 30 = 0
+            'FillAudioBuffer(audioFrame, doTone)
 
-                    ' get a compatible bitmap and graphics context
-                    Using bmp As New Bitmap(videoFrame.Width, videoFrame.Height, videoFrame.Stride, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, videoFrame.BufferPtr)
+            ' Submit the audio buffer
+            sendInstance.Send(audioFrame)
 
-                        Using graphics As Graphics = Graphics.FromImage(bmp)
+            ' fill it with a lovely color
+            graphics.Clear(Color.Red)
 
-                            graphics.SmoothingMode = SmoothingMode.AntiAlias
-
-                            ' We'll use these later inside the loop
-                            Dim textFormat As New StringFormat()
-                            textFormat.Alignment = StringAlignment.Center
-                            textFormat.LineAlignment = StringAlignment.Center
-
-                            Dim fontFamily As New FontFamily("Arial")
-                            Dim outlinePen As New Pen(Color.Black, 2.0F)
-                            Dim thinOutlinePen As New Pen(Color.Black, 1.0F)
-
-                            ' We will send 10000 frames of video.
-                            For frameNumber As Integer = 0 To 9999
-                                ' are we connected to anyone?
-                                If sendInstance.GetConnections(10000) < 1 Then
-                                    ' no point rendering
-                                    Console.WriteLine("No current connections, so no rendering needed.")
-
-                                    ' Wait a bit, otherwise our limited example will end before you can connect to it
-                                    System.Threading.Thread.Sleep(50)
-                                Else
-                                    ' Because we are clocking to the video it is better to always submit the audio
-                                    ' before, although there is very little in it. I'll leave it as an excercise for the
-                                    ' reader to work out why.
-                                    audioFrame.NumSamples = audioNumSamples(frameNumber Mod 5)
-                                    audioFrame.ChannelStride = audioFrame.NumSamples * 4
-
-                                    ' put tone in it every 30 frames
-                                    Dim doTone As Boolean = frameNumber Mod 30 = 0
-                                    FillAudioBuffer(audioFrame, doTone)
-
-                                    ' Submit the audio buffer
-                                    sendInstance.Send(audioFrame)
-
-                                    ' fill it with a lovely color
-                                    graphics.Clear(Color.Green)
-
-                                    ' show which source we are
-                                    DrawPrettyText(graphics, "VB Example Source by Vimlesh", 96.0F, fontFamily, New Point(960, 100), textFormat,
+            ' show which source we are
+            DrawPrettyText(graphics, "VB Example Source by mcs", 96.0F, fontFamily, New Point(0, 100), textFormat,
                                         Brushes.White, outlinePen)
 
-                                    ' Get the tally state of this source (we poll it),
-                                    ' This gets a snapshot of the current tally state.
-                                    ' Accessing sendInstance.Tally directly would make an API call
-                                    ' for each "if" below and could cause inaccurate results.
-                                    Dim NDI_tally As NDIlib.tally_t
-                                    NDI_tally = sendInstance.Tally
+            ' Get the tally state of this source (we poll it),
+            ' This gets a snapshot of the current tally state.
+            ' Accessing sendInstance.Tally directly would make an API call
+            ' for each "if" below and could cause inaccurate results.
+            Dim NDI_tally As NDIlib.tally_t
+                NDI_tally = sendInstance.Tally
 
-                                    ' Do something different depending on where we are shown
-                                    If NDI_tally.on_program Then
-                                        DrawPrettyText(graphics, "On Program", 96.0F, fontFamily, New Point(960, 225), textFormat,
+                ' Do something different depending on where we are shown
+                If NDI_tally.on_program Then
+                DrawPrettyText(graphics, "On Program", 96.0F, fontFamily, New Point(0, 225), textFormat,
                                             Brushes.White, outlinePen)
-                                    ElseIf NDI_tally.on_preview Then
-                                        DrawPrettyText(graphics, "On Preview", 96.0F, fontFamily, New Point(960, 225), textFormat,
+            ElseIf NDI_tally.on_preview Then
+                DrawPrettyText(graphics, "On Preview", 96.0F, fontFamily, New Point(0, 225), textFormat,
                                             Brushes.White, outlinePen)
-                                    End If
+            End If
 
-                                    '''/ show what frame we've rendered
-                                    DrawPrettyText(graphics, [String].Format("Frame {0}", frameNumber.ToString()), 96.0F, fontFamily, New Point(960, 350), textFormat,
+            ' show what frame we've rendered
+            'DrawPrettyText(graphics, [String].Format("Frame {0}", frameNumber.ToString()), 96.0F, fontFamily, New Point(960, 350), textFormat, Brushes.White, outlinePen)
+
+
+            ' show current time
+            DrawPrettyText(graphics, System.DateTime.Now.ToString(), 96.0F, fontFamily, New Point(0, 900), textFormat,
                                         Brushes.White, outlinePen)
 
-                                    ' show current time
-                                    DrawPrettyText(graphics, System.DateTime.Now.ToString(), 96.0F, fontFamily, New Point(960, 900), textFormat,
-                                        Brushes.White, outlinePen)
+            ' We now submit the frame. Note that this call will be clocked so that we end up submitting 
+            ' at exactly 29.97fps.
+            sendInstance.Send(videoFrame)
 
-                                    ' We now submit the frame. Note that this call will be clocked so that we end up submitting 
-                                    ' at exactly 29.97fps.
-                                    sendInstance.Send(videoFrame)
-
-                                    ' Just display something helpful in the console
-                                    Console.WriteLine("Frame number {0} sent.", frameNumber)
-                                End If
-                            Next
-
-                        End Using ' for the Graphics
-                    End Using ' for the Bitmap
-
-                End Using ' for the AudioFrame
-            End Using ' for the VideoFrame
-        End Using ' for the Sender
+                ' Just display something helpful in the console
+                'Console.WriteLine("Frame number {0} sent.", frameNumber)
+            End If
+        ' Next
 
     End Sub
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         Main()
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        ' fill it with a lovely color
+        graphics.Clear(Color.Transparent)
+        DrawPrettyText(graphics, ComboBox1.Text, 96.0F, fontFamily, New Point(100, 300), textFormat, Brushes.White, outlinePen)
+        sendInstance.Send(videoFrame)
+
+    End Sub
+
+    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
+        graphics.Clear(Color.Transparent)
+        'Graphics.FromImage(Image.FromFile("d:/africa.jpg"))
+        graphics.DrawImage(Image.FromFile("d:/africa.jpg"), New Point(500, 300))
+        DrawPrettyText(graphics, ComboBox1.Text, 96.0F, fontFamily, New Point(500, 600), textFormat, Brushes.White, outlinePen)
+        sendInstance.Send(videoFrame)
     End Sub
 End Class
