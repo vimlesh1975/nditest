@@ -1,0 +1,21 @@
+D:\_00Training\nditest\nditest\bin\Debug\nditest.exe.config
+D:\_00Training\nditest\nditest\bin\Debug\nditest.exe
+D:\_00Training\nditest\nditest\bin\Debug\nditest.pdb
+D:\_00Training\nditest\nditest\bin\Debug\nditest.xml
+D:\_00Training\nditest\nditest\bin\Debug\NDILibDotNet2.dll
+D:\_00Training\nditest\nditest\bin\Debug\VB NDI Send.exe
+D:\_00Training\nditest\nditest\bin\Debug\NAudio.dll
+D:\_00Training\nditest\nditest\bin\Debug\NDILibDotNet2.pdb
+D:\_00Training\nditest\nditest\bin\Debug\VB NDI Send.pdb
+D:\_00Training\nditest\nditest\bin\Debug\VB NDI Send.exe.config
+D:\_00Training\nditest\nditest\bin\Debug\NAudio.xml
+D:\_00Training\nditest\nditest\obj\Debug\nditest.vbproj.AssemblyReference.cache
+D:\_00Training\nditest\nditest\obj\Debug\nditest.vbproj.SuggestedBindingRedirects.cache
+D:\_00Training\nditest\nditest\obj\Debug\nditest.Resources.resources
+D:\_00Training\nditest\nditest\obj\Debug\nditest.vbproj.GenerateResource.cache
+D:\_00Training\nditest\nditest\obj\Debug\nditest.vbproj.CoreCompileInputs.cache
+D:\_00Training\nditest\nditest\obj\Debug\nditest.vbproj.CopyComplete
+D:\_00Training\nditest\nditest\obj\Debug\nditest.exe
+D:\_00Training\nditest\nditest\obj\Debug\nditest.xml
+D:\_00Training\nditest\nditest\obj\Debug\nditest.pdb
+D:\_00Training\nditest\nditest\obj\Debug\nditest.Form1.resources
