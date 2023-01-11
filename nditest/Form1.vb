@@ -161,25 +161,22 @@ Public Class Form1
     End Sub
 
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
-        ' fill it with a lovely color
         graphics.Clear(Color.Transparent)
-        DrawPrettyText(graphics, ComboBox1.Text, 96.0F, fontFamily, New Point(100, 300), textFormat, Brushes.White, outlinePen)
-        sendInstance.Send(videoFrame)
-
-    End Sub
-
-    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
-        graphics.Clear(Color.Transparent)
-        graphics.DrawImage(Image.FromFile("d:/africa.jpg"), 500, 300)
+        'graphics.DrawImage(Image.FromFile("africa.jpg"), 500, 300)
+        graphics.DrawImage(PictureBox1.Image, 500, 300)
         graphics.DrawRectangle(outlinePen, 100, 100, 200, 200)
-        graphics.FillRectangle(Brushes.White, 100, 100, 200, 200)
+        graphics.FillRectangle(Brushes.Red, 100, 100, 200, 200)
 
 
         DrawPrettyText(graphics, ComboBox1.Text, 96.0F, fontFamily, New Point(500, 600), textFormat, Brushes.White, outlinePen)
         sendInstance.Send(videoFrame)
+
     End Sub
 
-    Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
-
+    Private Sub PictureBox1_Click(sender As Object, e As EventArgs) Handles PictureBox1.Click
+        Dim aa As New OpenFileDialog
+        If aa.ShowDialog = DialogResult.OK Then
+            PictureBox1.ImageLocation = aa.FileName
+        End If
     End Sub
 End Class
