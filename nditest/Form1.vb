@@ -12,7 +12,7 @@ Public Class Form1
     ' You can manually handle .Dispose() for longer lived objects or use any pattern you prefer.
 
     ' this will show up as a source named "VB.Net Example" with all other settings at their defaults
-    Dim sendInstance As New Sender("VB.Net Example")
+    Dim sendInstance As New Sender("cmp")
 
     ' We are going to create a 1920x1080 16:9 frame at 29.97Hz, progressive (default).
     Dim videoFrame As New VideoFrame(1920, 1080, (16.0F / 9.0F), 30000, 1001)
@@ -36,6 +36,8 @@ Public Class Form1
     Dim fontFamily As New FontFamily("Arial")
     Dim outlinePen As New Pen(Color.Black, 2.0F)
     Dim thinOutlinePen As New Pen(Color.Black, 1.0F)
+
+    Dim NDI_tally As NDIlib.tally_t
 
     Private Shared Sub FillAudioBuffer(audioFrame As AudioFrame, doTone As Boolean)
         ' should never happen
@@ -65,6 +67,8 @@ Public Class Form1
         Next
     End Sub
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Label1.Text = sendInstance.Tally.on_program
+        Label2.Text = sendInstance.GetConnections(10000)
 
     End Sub
     Private Shared Sub DrawPrettyText(graphics As Graphics, text As [String], size As Single, family As FontFamily, origin As Point, format As StringFormat,
@@ -121,8 +125,8 @@ Public Class Form1
             ' This gets a snapshot of the current tally state.
             ' Accessing sendInstance.Tally directly would make an API call
             ' for each "if" below and could cause inaccurate results.
-            Dim NDI_tally As NDIlib.tally_t
-                NDI_tally = sendInstance.Tally
+
+            NDI_tally = sendInstance.Tally
 
                 ' Do something different depending on where we are shown
                 If NDI_tally.on_program Then
@@ -166,9 +170,16 @@ Public Class Form1
 
     Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
         graphics.Clear(Color.Transparent)
-        'Graphics.FromImage(Image.FromFile("d:/africa.jpg"))
-        graphics.DrawImage(Image.FromFile("d:/africa.jpg"), New Point(500, 300))
+        graphics.DrawImage(Image.FromFile("d:/africa.jpg"), 500, 300)
+        graphics.DrawRectangle(outlinePen, 100, 100, 200, 200)
+        graphics.FillRectangle(Brushes.White, 100, 100, 200, 200)
+
+
         DrawPrettyText(graphics, ComboBox1.Text, 96.0F, fontFamily, New Point(500, 600), textFormat, Brushes.White, outlinePen)
         sendInstance.Send(videoFrame)
+    End Sub
+
+    Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
+
     End Sub
 End Class
